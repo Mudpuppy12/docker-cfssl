@@ -1,0 +1,15 @@
+version: "3.2"
+services:
+  docker-cfssl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mudpuppy/cfssl:latest
+    container_name: docker-cfssl
+    ports:
+      - "8888:8888"
+    volumes:
+      - /opt/src/cfssl/api-server/ca.pem:/etc/cfssl/ca.pem
+      - /opt/src/cfssl/api-server/ca-key.pem:/etc/cfssl/ca-key.pem
+      - /opt/src/cfssl/api-server/ca_config.json:/etc/cfssl/ca_config.json
+    command: serve -ca-key /etc/cfssl/ca-key.pem -ca /etc/cfssl/ca.pem -config /etc/cfssl/ca_config.json -address=0.0.0.0

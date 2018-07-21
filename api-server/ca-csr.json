@@ -1,0 +1,16 @@
+{
+    "CN": "CFSSL Automation CA",
+    "key": {
+      "algo": "rsa",
+      "size": 2048
+    },
+      "names": [
+         {
+           "C": "US",
+           "L": "New Braunfels",
+           "O": "CFSSL Automation CA",
+           "OU": "CA",
+           "ST": "Texas"
+         }
+      ]
+  }

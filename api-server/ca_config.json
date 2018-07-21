@@ -1,0 +1,23 @@
+
+	{
+    "auth_keys" : {
+       "api-key" : {
+          "type" : "standard",
+          "key" : "000102030405060708"
+       }
+    },
+    "signing" : {
+       "default" : {
+          "expiry" : "43830h",
+          "auth_key" : "api-key",
+          "usages" : [
+             "signing",
+             "key encipherment",
+             "client auth",
+             "server auth"
+          ]
+         
+       }
+    }
+ }
+ 
