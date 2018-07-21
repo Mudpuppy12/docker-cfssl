@@ -9,7 +9,7 @@ submits a csr and The PKI server  will then return a signed certificate back to 
 ## Notes
 
 You will need the cfssl and cfssljson binaries on your client to talk to the api-server.
-Head over to https://github.com/cloudflare/cfssl to install. Stick the binaries them into a artifactory, or use fpm https://github.com/jordansissel/fpm and make an rpm for your internal repos.
+Head over to https://github.com/cloudflare/cfssl to install. Stick the binaries into a artifactory, or use fpm https://github.com/jordansissel/fpm and make an rpm for your internal repos.
 
 Use ansible to grab the client, then create certs during service installs. That's my attack
 plan
