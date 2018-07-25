@@ -13,17 +13,15 @@ def load_data():
     db=sqlite3.connect('/opt/src/cfssl/api-server/certs.db')
     
     cursor = db.cursor()
-    
-    #cursor.execute('''SELECT serial_number, pem, max(expiry) FROM certificates''')
-    #cursor.execute('''SELECT pem, expiry FROM certificates WHERE expiry not in (SELECT max(expiry) FROM certificates)''')
-    
+
     cursor.execute('''SELECT serial_number, pem, expiry FROM certificates''')
-    results = cursor.fetchall()
+    results = cursor.fetchall()  
     
     
     # Build a dictionary with serial as key with information decoded from the PEM.
     data={}
     old_serials=[]
+
     for row in results:
        p = subprocess.Popen(['/opt/cfssl/cfssl-certinfo','-cert','-'],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
        p.stdin.write(row[1])
@@ -46,8 +44,11 @@ def load_data():
            'expires': tmp['not_after'],
            'serial': row[0]
           } 
-    pprint.pprint(data)
+
     db.close()
+    return(data,old_serials,len(results))
+def list_certs(data):
+    pprint.pprint(data)
 
 def args(): 
      parser = argparse.ArgumentParser(
@@ -65,7 +66,6 @@ def args():
     )
 
      parser.add_argument(
-        '-d',
         '--delete',
         help='Delete duplicate common names, keep only latest expiration date in database',
         required=False,
@@ -95,13 +95,28 @@ def args():
         action='store_true'
     )
 
+     parser.add_argument(
+        '-db',
+        '--database',
+        help='Database file to use, Default: [ %(default)s ]',
+        required=False,
+        default= '/opt/src/cfssl/api-server/certs.db'
+    )
+
      return vars(parser.parse_args())
 
 def main():
     user_args = args()
 
     if user_args['list']:
-        load_data()
+        (data, dups, size) = load_data()
+        list_certs(data)
+    if user_args['count']:
+        (data, dups, size) = load_data()
+        print('There are {} entries in the database.').format(size)
+    if user_args['dupes']:
+        (data, dups, size) = load_data()
+        print('There are {} duplicate entries in the database.').format(len(dups)+1)
 
 if __name__ == "__main__":
     main()
