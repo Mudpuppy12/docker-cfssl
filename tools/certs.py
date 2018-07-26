@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Beginings of a toolset to examine certificates that are deployed.
+""" This script helps with dealing with the cfssl certificate sqlite database
+"""
 
 import json
 import subprocess
@@ -11,9 +12,10 @@ import arrow
 
 
 def load_data(database):
-    db = sqlite3.connect(database)
+    """ Function that loads the data and parses it into a dictionary object """
+    db_handle = sqlite3.connect(database)
 
-    cursor = db.cursor()
+    cursor = db_handle.cursor()
 
     cursor.execute('''SELECT serial_number, pem, expiry FROM certificates''')
     results = cursor.fetchall()
@@ -23,10 +25,13 @@ def load_data(database):
     old_serials = []
 
     for row in results:
-        p = subprocess.Popen(['/opt/cfssl/cfssl-certinfo', '-cert', '-'],
-                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        p.stdin.write(row[1])
-        (output, err) = p.communicate()
+        popen = subprocess.Popen(['/opt/cfssl/cfssl-certinfo', '-cert', '-'],
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        popen.stdin.write(row[1])
+        (output, err) = popen.communicate()
+
+        if err:
+            exit()
         tmp = json.loads(output)
 
         # Lets trim the output a bit we are interested in unique common names with
@@ -50,17 +55,19 @@ def load_data(database):
                 'serial': row[0]
             }
 
-    db.close()
+    db_handle.close()
     return(data, old_serials, len(results))
 
 
 def list_certs(data):
+    """ list certificates in the database """
     for cert in data:
         print('CN={}, Serial={}, Expires={}').format(
             cert, data[cert]['serial'], data[cert]['expires'])
 
 
 def expire_ndays(data, ndays):
+    """ display certificates that expire in n-number of days """
 
     for cert in data:
         delta = arrow.get(data[cert]['expires']) - arrow.utcnow()
@@ -69,18 +76,21 @@ def expire_ndays(data, ndays):
 
 
 def purge_dups(duplicates, database):
-    db = sqlite3.connect(database)
+    """ Purge the database of multiple certificates with the name CN, keep newest """
+    db_handle = sqlite3.connect(database)
 
-    cursor = db.cursor()
+    cursor = db_handle.cursor()
     query_string = "DELETE from certificates where serial_number in (%s)" % ','.join([
         '?'] * len(duplicates))
     cursor.execute(query_string, duplicates)
     cursor.close()
-    db.commit()
-    db.close()
+    db_handle.commit()
+    db_handle.close()
 
 
 def args():
+    """ Define the arguments we are parsing below """
+
     parser = argparse.ArgumentParser(
         usage='%(prog)s',
         description='cfssl database tools',
@@ -138,6 +148,7 @@ def args():
 
 
 def main():
+    """ Main routine """
     user_args = args()
 
     if user_args['list']:
