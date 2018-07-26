@@ -1,16 +1,18 @@
 #!/usr/bin/python
-# Beginings of a toolset to examine certificates that are deployed. The goal is to 
-# 1. Remove duplicate signing requests with same common name
-# 2. Check expiration dates to alert on common names close to expirting.
+# Beginings of a toolset to examine certificates that are deployed.
 
 import json
 import subprocess
 import sqlite3
 import argparse
 import pprint
+import datetime
+import arrow
 
-def load_data():
-    db=sqlite3.connect('/opt/src/cfssl/api-server/certs.db')
+# Using arrow for ISO 8601 date manipulation
+
+def load_data(database):
+    db=sqlite3.connect(database)
     
     cursor = db.cursor()
 
@@ -48,8 +50,15 @@ def load_data():
     db.close()
     return(data,old_serials,len(results))
 def list_certs(data):
-    pprint.pprint(data)
+    for cert in data:
+        print('CN={}, Serial={}, Expires={}').format(cert,data[cert]['serial'],data[cert]['expires'])
+def expire_ndays(data,ndays):
 
+    for cert in data:
+        delta = arrow.get(data[cert]['expires']) - arrow.utcnow()
+        if delta.days <= ndays:
+            print('{} will expire in {} days').format(cert,delta.days) 
+        
 def args(): 
      parser = argparse.ArgumentParser(
         usage='%(prog)s',
@@ -82,9 +91,10 @@ def args():
      parser.add_argument(
         '-n',
         '--ndays',
-        help='Show certificates that will expire in X days Default: [ %(default)s ]',
+        help='Show certificates that will expire in X days',
         required=False,
-        default='30'
+        type=int,
+        default=30,
     )
 
      parser.add_argument(
@@ -109,14 +119,17 @@ def main():
     user_args = args()
 
     if user_args['list']:
-        (data, dups, size) = load_data()
+        (data, dups, size) = load_data(user_args['database'])
         list_certs(data)
     if user_args['count']:
-        (data, dups, size) = load_data()
+        (data, dups, size) = load_data(user_args['database'])
         print('There are {} entries in the database.').format(size)
     if user_args['dupes']:
-        (data, dups, size) = load_data()
+        (data, dups, size) = load_data(user_args['database'])
         print('There are {} duplicate entries in the database.').format(len(dups)+1)
+    if user_args['ndays']:
+        (data, dups, size) = load_data(user_args['database'])
+        expire_ndays(data,user_args['ndays'])
 
 if __name__ == "__main__":
     main()
