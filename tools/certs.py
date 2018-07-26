@@ -58,7 +58,17 @@ def expire_ndays(data,ndays):
         delta = arrow.get(data[cert]['expires']) - arrow.utcnow()
         if delta.days <= ndays:
             print('{} will expire in {} days').format(cert,delta.days) 
-        
+def purge_dups(duplicates,database):
+    db=sqlite3.connect(database)
+    
+    cursor = db.cursor()
+    query_string = "DELETE from certificates where serial_number in (%s)" % ','.join(['?'] * len(duplicates))
+    cursor.execute(query_string, duplicates)
+    cursor.close()
+    db.commit()
+    db.close()
+
+
 def args(): 
      parser = argparse.ArgumentParser(
         usage='%(prog)s',
@@ -126,10 +136,14 @@ def main():
         print('There are {} entries in the database.').format(size)
     if user_args['dupes']:
         (data, dups, size) = load_data(user_args['database'])
-        print('There are {} duplicate entries in the database.').format(len(dups)+1)
+        print('There are {} duplicate entries in the database.').format(len(dups))
     if user_args['ndays']:
         (data, dups, size) = load_data(user_args['database'])
         expire_ndays(data,user_args['ndays'])
+
+    if user_args['delete']:
+        (data, dups, size) = load_data(user_args['database'])
+        purge_dups(dups,user_args['database'])
 
 if __name__ == "__main__":
     main()
