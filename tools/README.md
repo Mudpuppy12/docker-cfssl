@@ -6,7 +6,7 @@ Tool to test java keystores
 
 Usage:
 <pre>
-java -Djavax.net.ssl.trustStore=/opt/pki/java/keystore.jks -Djavax.net.ssl.trustStorePassword=<password> SSLPoke <server> <port>
+java -Djavax.net.ssl.trustStore=/opt/pki/java/keystore.jks -Djavax.net.ssl.trustStorePassword=<PASSWORD> SSLPoke <SERVER> <PORT>
 </pre>
 
 simple-srv.py
