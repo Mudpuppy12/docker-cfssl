@@ -1,0 +1,31 @@
+---
+- name: install java for keytool utility
+  yum:
+    name: "java-1.8.0-openjdk"
+    state: present
+
+- name: Let's blow out any old keystores if exisiting
+  file:
+    path: "/opt/cfssl/pki/java/{{ansible_fqdn}}.jks"
+    state: absent
+  ignore_errors: true
+
+- name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist
+  java_cert:
+    pkcs12_path: "/opt/cfssl/pki/pkcs12/{{ansible_fqdn}}.p12"
+    cert_alias: default
+    pkcs12_alias: default
+    keystore_path: "/opt/cfssl/pki/java/{{ansible_fqdn}}.jks"
+    pkcs12_password: "{{ cfssl_keystore_pass }}"
+    keystore_pass: "{{ cfssl_keystore_pass }}"
+    keystore_create: yes
+    state: present
+
+- name: Add the CA certificate to keystore
+  java_cert:
+    cert_path: "/opt/cfssl/pki/crt/ca-root.pem"
+    keystore_path: "/opt/cfssl/pki/java/{{ansible_fqdn}}.jks"
+    keystore_pass: "{{ cfssl_keystore_pass }}"
+    cert_alias: "RootCa"
+    state: present
+

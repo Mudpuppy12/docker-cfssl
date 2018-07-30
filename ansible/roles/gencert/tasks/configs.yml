@@ -1,0 +1,49 @@
+---
+- name: cfssl certificate directories
+  file: path="{{ item.path }}" mode={{ item.mode|default('0755') }} owner={{ item.owner|default('root') }} group={{ item.group|default('root') }} state=directory
+  with_items: "{{ cfssl_directories }}"
+
+- name: Generating pki client config
+  copy: 
+    content: "{{ pki_server }}"
+    dest: "/opt/cfssl/pki/json/config_client.json"
+
+- name: Generating csr template
+  copy: 
+    content: "{{ csr_generate }}"
+    dest: "/opt/cfssl/pki/json/csr_generate-{{ ansible_hostname }}.json"
+
+- name: Generating private key and csr for manual signing
+  shell: '/opt/cfssl/cfssl genkey /opt/cfssl/pki/json/csr_generate-"{{ ansible_hostname }}".json|/opt/cfssl/cfssljson -bare "{{ansible_fqdn}}"'
+  args:
+    chdir: /opt/cfssl/workdir
+  register: cfssl_output
+  when: not gencert_auto 
+
+- name: Generating private key, csr, and automatic crt signed by pki server 
+  shell: '/opt/cfssl/cfssl gencert -config /opt/cfssl/pki/json/config_client.json /opt/cfssl/pki/json/csr_generate-"{{ ansible_hostname }}".json|/opt/cfssl/cfssljson -bare "{{ansible_fqdn}}"'
+  args:
+    chdir: /opt/cfssl/workdir
+  register: cfssl_output
+  when: gencert_auto
+
+- name: Generating pki CA root certificate
+  copy: 
+    content: "{{ pki_server_CAfile }}"
+    dest: "/opt/cfssl/pki/crt/ca-root.pem"
+  when: gencert_auto
+
+
+- name: Moving key from workdir
+  command: 'mv /opt/cfssl/workdir/"{{ ansible_fqdn }}"-key.pem /opt/cfssl/pki/key'
+
+- name: Moving csr from workdir
+  command: 'mv /opt/cfssl/workdir/"{{ ansible_fqdn }}".csr /opt/cfssl/pki/csr'
+
+- name: Moving crt from workdir
+  command: 'mv /opt/cfssl/workdir/"{{ ansible_fqdn }}".pem /opt/cfssl/pki/crt'
+  when: gencert_auto
+
+- name: generating a pkc12 bundle
+  shell: 'openssl pkcs12 -export -name default -passout pass:changeit -inkey /opt/cfssl/pki/key/"{{ ansible_fqdn }}"-key.pem -in /opt/cfssl/pki/crt/"{{ansible_fqdn }}".pem -out /opt/cfssl/pki/pkcs12/"{{ ansible_fqdn }}".p12'
+  

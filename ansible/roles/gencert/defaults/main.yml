@@ -1,0 +1,88 @@
+---
+cfssl:
+  repository:
+    artifact: cfssl-1.3.2.tgz
+    location: "service/local/repositories/thirdparty/content/com/company/thirdparty/cfssl/cfssl"
+  version: "1.3.2"
+
+cfssl_pki:
+   url: "http://127.0.0.1"
+   port: "8888"
+   api_key: "Some Key here"
+
+cfssl_keystore_pass: changeit
+
+cfssl_directories:
+      - { path: /opt/cfssl/pki }
+      - { path: /opt/cfssl/pki/crt }
+      - { path: /opt/cfssl/pki/key, mode: '0700' }
+      - { path: /opt/cfssl/pki/csr }
+      - { path: /opt/cfssl/pki/json }
+      - { path: /opt/cfssl/workdir, mode: '0700'}
+      - { path: /opt/cfssl/pki/java }
+      - { path: /opt/cfssl/pki/pkcs12 }
+      
+
+csr_generate: {
+  "CN": "{{ csr_generate_cn | default (ansible_fqdn) }}",
+  "hosts": ["{{ csr_generate_sans | default(ansible_fqdn) }}"],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "{{ csr_country | default('US') }}",
+      "L": "{{ csr_loction | default('Austin') }}",
+      "O": "{{ csr_organization | default('MyCompany') }}",
+      "OU": "{{ csr_orgunit | default('Client Cert') }}",
+      "ST": "{{ csr_state | default('Texas') }}"
+    }
+  ]
+}
+
+pki_server_CAfile: |  
+ -----BEGIN CERTIFICATE-----
+ MIIDzDCCArSgAwIBAgIUc/OXilzMkIRvrxh4ZVHr+ac0ZccwDQYJKoZIhvcNAQEL
+ BQAwfjELMAkGA1UEBhMCVVMxDjAMBgNVBAgTBVRleGFzMRYwFAYDVQQHEw1OZXcg
+ QnJhdW5mZWxzMRwwGgYDVQQKExNDRlNTTCBBdXRvbWF0aW9uIENBMQswCQYDVQQL
+ EwJDQTEcMBoGA1UEAxMTQ0ZTU0wgQXV0b21hdGlvbiBDQTAeFw0xODA3MjQxNTI5
+ MDBaFw0yMzA3MjMxNTI5MDBaMH4xCzAJBgNVBAYTAlVTMQ4wDAYDVQQIEwVUZXhh
+ czEWMBQGA1UEBxMNTmV3IEJyYXVuZmVsczEcMBoGA1UEChMTQ0ZTU0wgQXV0b21h
+ dGlvbiBDQTELMAkGA1UECxMCQ0ExHDAaBgNVBAMTE0NGU1NMIEF1dG9tYXRpb24g
+ Q0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCjlDFAFISAiJAsiGcH
+ YeV1NUPIgpXPiBUGoALNFpHXUxSOXxy3mkeIswAoQ6lTztW2hMYwSSMMfTHW+zqu
+ L7s0EUtohSkwUDWgO4oQCOgMisQx1L73Z92iLB06Yt4nHiO0HJy5jtnJ4fs9LJab
+ WX9UiAZ1Vvgd4gux+wAaYsUlEbOalxY1l3kEn6qpI0eoWuqXXtbdW4ie0BH5Q3Sr
+ sJNY2KVMwrEv10iK0iMYdzmyqvVlHiC+PqLmWI1Po19J0hYOjbSYlSdGWVm6Mu1y
+ ywYSXEOlGeQvH1pkFlniNxrppIodWznw1+20dTDGKOqP1B4AvsnlX3WYMUfBptML
+ 9w7dAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0G
+ A1UdDgQWBBRa+r5b8t3DPlKKOib8aDsV2DFknTANBgkqhkiG9w0BAQsFAAOCAQEA
+ H26hMoeQBf0SExzQhKoKjy+U+lw5sO4h/XjYn7rHDwJKZ2wFIIy4+GXXWwBmhLU8
+ WPzloXTXZIZOYXlRkTNFZWC8NblynLjhZmWUr98FYX2Qev5kcu1seIhYYSXy3NFL
+ 3+w34W6EkeOw/SydfLzK9GjFvBJWpi+IuD5BpGnFMDFzWwHCQhrqGhN6JUPf9MZZ
+ g+HE1ZltLssXgt8yPC9dKE3T9dEZkHVO8XV7i+RQyj3vDFIouro+TWPBphtCx7dn
+ Dr3RGwcKyRLsXNfAzogX+fPed2NEFH2M7HX7lBQw5mDq90Tc6UghLr13oTM5InfS
+ 2TcXO/aD+411ETBZU9jrJQ==
+ -----END CERTIFICATE-----
+pki_server: {           
+  "auth_keys" : {
+     "api-key" : {
+        "type" : "standard",
+        "key" : "{{ cfssl_pki.api_key }}"
+     }
+  },
+  "signing" : {
+     "default" : {
+        "auth_remote" : {
+           "remote" : "api-server",
+           "auth_key" : "api-key"
+        }
+     }
+  },
+  "remotes" : {
+     "api-server" : "{{ cfssl_pki.url }}:{{ cfssl_pki.port }}"
+  }
+}
+
+

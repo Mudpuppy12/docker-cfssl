@@ -1,0 +1,5 @@
+---
+- include: packages.yml
+- include: configs.yml
+- include: keytool.yml
+  when: gencert_auto and genkeystore

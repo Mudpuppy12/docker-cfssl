@@ -1,0 +1,47 @@
+---
+- name: Ensure cfssl directory exists
+  file:
+    path: /opt/cfssl
+    state: directory
+    mode: 0755
+
+- name: Check current cfssl installation
+  command: /opt/cfssl/cfssl version
+  register: cfssl_version
+  ignore_errors: true
+  
+- set_fact:
+     cfssl_install: true
+  when: cfssl_version.failed == true 
+  
+- set_fact:
+     cfssl_install: true
+  when: cfssl.version not in cfssl_version.stdout_lines[0] 
+  ignore_errors: true
+
+   
+- name: Fetch cfssl utilities from nexus
+  get_url:
+    url: "{{ nexus.address }}/{{ cfssl.repository.location }}/{{ cfssl.version }}/{{ cfssl.repository.artifact }}"
+    url_username: "{{ nexus.credentials.username }}"
+    url_password: "{{ nexus.credentials.password }}"
+    validate_certs: no
+    dest: "/opt/cfssl/{{ cfssl.repository.artifact }}"
+  register: artifact_download
+  when: cfssl_install is defined
+
+- name: Extract cfssl into /opt/cfssl
+  unarchive: 
+    src: "/opt/cfssl/{{ cfssl.repository.artifact }}"
+    dest: /opt/cfssl
+    remote_src: yes
+  when: cfssl_install is defined
+  
+
+- name: Remove cfssl artifact
+  file:
+    state: absent
+    path: "/opt/cfssl/{{ cfssl.repository.artifact }}"
+  when: cfssl_install is defined
+
+
