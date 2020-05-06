@@ -9,10 +9,13 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - /opt/src/cfssl/api-server/ca.pem:/etc/cfssl/ca.pem
-      - /opt/src/cfssl/api-server/ca-key.pem:/etc/cfssl/ca-key.pem
-      - /opt/src/cfssl/api-server/ca_config.json:/etc/cfssl/ca_config.json
-      - /opt/src/cfssl/api-server/db_config.json:/etc/cfssl/db_config.json
-      - /opt/src/cfssl/api-server/certs.db:/etc/cfssl/certs.db
-    command: serve -ca-key /etc/cfssl/ca-key.pem -ca /etc/cfssl/ca.pem -config /etc/cfssl/ca_config.json -address=0.0.0.0 -db-config=/etc/cfssl/db_config.json
+      - /opt/docker/cfssl/certs/ca.pem:/etc/cfssl/ca.pem
+      - /opt/docker/cfssl/certs/ca-key.pem:/etc/cfssl/ca-key.pem
+      - /opt/docker/cfssl/ca_config.json:/etc/cfssl/ca_config.json
+      - /opt/docker/cfssl/db_config.json:/etc/cfssl/db_config.json
+      - /opt/docker/cfssl/certs.db:/etc/cfssl/certs.db
+      - /opt/docker/cfssl/multiroot-profile.ini:/etc/cfssl/multiroot-profile.ini
+      - /opt/docker/cfssl/certs/containers01.pem:/etc/cfssl/api.pem
+      - /opt/docker/cfssl/certs/containers01-key.pem:/etc/cfssl/api-key.pem
 
+    command: -a 0.0.0.0:8888 -l default -roots /etc/cfssl/multiroot-profile.ini -tls-cert /etc/cfssl/api.pem -tls-key /etc/cfssl/api-key.pem

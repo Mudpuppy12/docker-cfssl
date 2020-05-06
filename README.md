@@ -19,3 +19,7 @@ You will want to fix up the docker-compose.yml with the correct file paths to th
 The example shell scripts should give you an idea how to use this setup. 
 
 You should change the API-KEY, if you planning on using these configs.
+
+## Updates 
+05/06 - After reading https://www.mikenewswanger.com/posts/2018/kubernetes-pki/ I am
+now changing this to use multirootca server for TLS and limited API endpoints

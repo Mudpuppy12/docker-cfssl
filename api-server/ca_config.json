@@ -8,7 +8,7 @@
     },
     "signing" : {
        "default" : {
-          "expiry" : "43830h",
+          "expiry" : "17520h",
           "auth_key" : "api-key",
           "usages" : [
              "signing",
