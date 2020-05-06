@@ -15,7 +15,7 @@ services:
       - /opt/docker/cfssl/db_config.json:/etc/cfssl/db_config.json
       - /opt/docker/cfssl/certs.db:/etc/cfssl/certs.db
       - /opt/docker/cfssl/multiroot-profile.ini:/etc/cfssl/multiroot-profile.ini
-      - /opt/docker/cfssl/certs/containers01.pem:/etc/cfssl/api.pem
-      - /opt/docker/cfssl/certs/containers01-key.pem:/etc/cfssl/api-key.pem
+      - /opt/docker/cfssl/certs/api.pem:/etc/cfssl/api.pem
+      - /opt/docker/cfssl/certs/api-key.pem:/etc/cfssl/api-key.pem
 
     command: -a 0.0.0.0:8888 -l default -roots /etc/cfssl/multiroot-profile.ini -tls-cert /etc/cfssl/api.pem -tls-key /etc/cfssl/api-key.pem
